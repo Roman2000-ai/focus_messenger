@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Telegram Login — redirect only</title>
+    <style>
+      body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; margin: 24px; line-height: 1.45; }
+      .box { max-width: 720px; margin: 0 auto; padding: 16px; border: 1px solid #ddd; border-radius: 12px; }
+      pre { background:#fafafa; border:1px dashed #ccc; padding:10px; border-radius:8px }
+    </style>
+  </head>
+  <body>
+  <h1>The main  page</h1>
+  <h2>{% if user.first_name and user.last_nam %}{{user.first_name}} {{user.last_name}} {% else %}{{user.username}}{% endif%}</h2>
+  {% if has_session %}
+  <!-- Блок приложения, когда Telethon уже авторизован -->
+  <h2>Отправить сообщение</h2>
+  <form id="send-form">
+    <input type="text" name="peer" placeholder="@username или номер" required />
+    <textarea name="text" placeholder="Текст" required></textarea>
+    <button type="submit">Отправить</button>
+  </form>
+
+  <script>
+    document.getElementById('send-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const fd = new FormData(e.target);
+      const payload = { user: fd.get('peer'), message: fd.get('text') };
+      const res = await fetch('telegram/send_message', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        credentials: 'include',
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if(data.success === true){
+        alert("сообщение было отправлено")
+      }
+      else{
+        alert("сообщение не было  отправлено")
+      }
+      //alert(res.ok ? 'OK: ' + JSON.stringify(data) : 'Ошибка: ' + data.detail);
+    });
+  </script>
+{% else %}
+  <!-- Блок авторизации по телефону, если Telethon-сессии нет -->
+  <h2>Авторизация Telegram (телефон)</h2>
+  <form id="phone-start">
+    <input type="text" name="phone" placeholder="+79991234567" required />
+    <button type="submit">Отправить код</button>
+  </form>
+
+  <form id="phone-code" style="display:none">
+    <input type="text" name="flow_id" />
+    <input type="text" name="code" placeholder="Код из Telegram" required />
+    <button type="submit">Подтвердить код</button>
+  </form>
+
+  <form id="phone-pwd" style="display:none">
+    <input type="text" name="flow_id" />
+    <input type="password" name="password" placeholder="Пароль 2FA" required />
+    <button type="submit">Подтвердить пароль</button>
+  </form>
+
+  <script>
+    const startForm = document.getElementById('phone-start');
+    const codeForm  = document.getElementById('phone-code');
+    const pwdForm   = document.getElementById('phone-pwd');
+
+    startForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const phone = new FormData(startForm).get('phone');
+      const res = await fetch('/auth/phone/start', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        credentials: 'include',
+        body: JSON.stringify({ phone })
+      });
+      const data = await res.json();
+      if (!res.ok) return alert(data.detail || 'Ошибка');
+      // показываем форму ввода кода
+      codeForm.style.display = '';
+      codeForm.querySelector('[name=flow_id]').value = data.flow_id;
+    });
+
+    codeForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const fd = new FormData(codeForm);
+      const payload = { flow_id: fd.get('flow_id'), code: fd.get('code') };
+      const res = await fetch('/auth/phone/verify_code', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        credentials: 'include',
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (!res.ok) return alert(data.detail || 'Ошибка');
+      if (data.need_2fa) {
+        // показать форму пароля
+        pwdForm.style.display = '';
+        pwdForm.querySelector('[name=flow_id]').value = payload.flow_id;
+      } else {
+        // успех — перезагрузим, чтобы сервер передал has_session=true
+        location.reload();
+      }
+    });
+
+    pwdForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const fd = new FormData(pwdForm);
+      const payload = { flow_id: fd.get('flow_id'), password: fd.get('password') };
+      const res = await fetch('/auth/phone/verify_password', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        credentials: 'include',
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (!res.ok) return alert(data.detail || 'Ошибка');
+      location.reload();
+    });
+  </script>
+{% endif %}
+  <button id="log_out">log out</button>
+  </body>
+  <script>
+     const button_log_out = document.getElementById("log_out");
+     button_log_out.onclick = function(){
+      const form = document.createElement('form');
+  form.method = 'POST';
+  form.action = '/logout';
+  document.body.appendChild(form);
+  form.submit(); // браузер выполни
+  }
+
+  </script>
+</html>
