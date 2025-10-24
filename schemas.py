@@ -49,6 +49,7 @@ class UserDB(BaseModel):
     telegram_id: int = Field(
         validation_alias=AliasChoices('id', "telegram_id")
     )
+    phone: int|str|None = None
     username: str| None = None
     first_name: str| None = None
     last_name: str| None = None
@@ -56,5 +57,36 @@ class UserDB(BaseModel):
     auth_date: int|None = None
 
 class MessageDTO(BaseModel):
-    user: str
+    username: str = Field(
+        
+        validation_alias=AliasChoices('username', "contact","peer")
+    )
     message: str
+
+class QRstatusDTO(BaseModel):
+    flow_id: str
+
+
+class AddContactPayload(BaseModel):
+    identifier: str
+
+
+
+class SendContactDTO(BaseModel):
+
+    telegram_id: int
+    username: str| None = None
+    first_name: str| None = None
+    last_name: str| None = None
+    phone: str| None = None
+
+    class Config:
+        from_attributes = True
+
+class TwofaDTO(BaseModel):
+
+    password: str
+    flow_id: str
+
+class Flow_idDTO(BaseModel):
+    flow_id: str

@@ -19,6 +19,7 @@ class User(Base):
     last_name:Mapped[str] = mapped_column(nullable=True)
     photo_url:Mapped[str] = mapped_column(nullable=True)
     auth_date:Mapped[int] = mapped_column(nullable=True)
+    phone:Mapped[str] = mapped_column(nullable=True)
      # для telethon  session в будущем
     
     session: Mapped["SessionTelethon"] = relationship(
@@ -26,7 +27,7 @@ class User(Base):
         cascade="all, delete-orphan",
         uselist=False
     )
-    chats: Mapped[list["Telegramchat"]] = relationship(
+    contacts: Mapped[list["Contact"]] = relationship(
         back_populates="user",
         cascade="all, delete-orphan"
     )
@@ -34,6 +35,7 @@ class User(Base):
         back_populates="user",
         cascade="all, delete-orphan"
     )
+    contacts: Mapped[list["Contact"]] = relationship(back_populates="user")
 
 
 class SessionTelethon(Base):
@@ -42,33 +44,47 @@ class SessionTelethon(Base):
     user_id:Mapped[int] = mapped_column(ForeignKey("users.id",ondelete="CASCADE"),nullable=False,unique=True)
     session: Mapped[str] = mapped_column(nullable=False)
 
-    user: Mapped[User] = relationship(back_populates="session")
+    user: Mapped["User"] = relationship(back_populates="session")
 
-class Telegramchat(Base):
-    __tablename__ = "telegramchats"
-    id: Mapped[int]  = mapped_column(primary_key=True,autoincrement=True)
-    chat_id: Mapped[int] = mapped_column(nullable=False,unique=True)
-    title: Mapped[str|None]
-    user_id: Mapped[int] = mapped_column(ForeignKey("users.id",ondelete="CASCADE"),nullable=False)
-    chat_type: Mapped[str|None]
-    username: Mapped[str|None]
-    created_at: Mapped[datetime.datetime] = mapped_column(server_default=func.now())
-    updated_at: Mapped[datetime.datetime] = mapped_column(server_default=func.now(), onupdate=func.now())
+# class Telegramchat(Base):
+#     __tablename__ = "telegramchats"
+#     id: Mapped[int]  = mapped_column(primary_key=True,autoincrement=True)
+#     chat_id: Mapped[int] = mapped_column(nullable=False,unique=True)
+#     title: Mapped[str|None]
+#     user_id: Mapped[int] = mapped_column(ForeignKey("users.id",ondelete="CASCADE"),nullable=False)
+#     chat_type: Mapped[str|None]
+#     username: Mapped[str|None]
+#     created_at: Mapped[datetime.datetime] = mapped_column(server_default=func.now())
+#     updated_at: Mapped[datetime.datetime] = mapped_column(server_default=func.now(), onupdate=func.now())
 
-    user: Mapped[User] = relationship(back_populates="chats")
+#     user: Mapped[User] = relationship(back_populates="chats")
 
 
 class Shablon(Base):
     __tablename__ = "shablons"
     id: Mapped[int]  = mapped_column(primary_key=True,autoincrement=True)
-    chat_id: Mapped[int] = mapped_column(ForeignKey("telegramchats.id",ondelete="CASCADE"),nullable=False)
+    contact_id: Mapped[int] = mapped_column(ForeignKey("contacts.id",ondelete="CASCADE"),nullable=False)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id",ondelete="CASCADE"),nullable=False)
     text: Mapped[str] = mapped_column(nullable=False)
 
-    user: Mapped[User] = relationship(back_populates="templates")
-    chat: Mapped[Telegramchat] = relationship()
+    user: Mapped["User"] = relationship(back_populates="templates")
+    contact: Mapped["Contact"] = relationship()
 
     __table_args__ = (
-        UniqueConstraint("user_id", "chat_id", "text", name="uq_shablon_user_chat_text"),
+        UniqueConstraint("user_id", "contact_id", "text", name="uq_shablon_user_chat_text"),
     )
+
+class Contact(Base):
+    __tablename__ = "contacts"
+    id: Mapped[int]  = mapped_column(primary_key=True,autoincrement=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id",ondelete="CASCADE"),nullable=True)
+    telegram_id:Mapped[int] = mapped_column(BigInteger,unique=True,nullable=False)
+    username:Mapped[str] = mapped_column(nullable=True)
+    first_name:Mapped[str] = mapped_column(nullable=True)
+    last_name:Mapped[str] = mapped_column(nullable=True)
+    photo_url:Mapped[str] = mapped_column(nullable=True)
+    phone:Mapped[str] = mapped_column(nullable=True)
+
+    user: Mapped["User"] = relationship(back_populates="contacts")
+
 

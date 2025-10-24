@@ -1,0 +1,159 @@
+:root {
+    --tg-color: #0088cc; /* Основной цвет Telegram */
+    --success-color: #4CAF50;
+    --error-color: #f44336;
+    --text-color: #333;
+    --bg-color: #f5f5f5;
+    --border-radius: 8px;
+    --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
+  
+  body {
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+  }
+  
+  h1, h2 {
+    color: var(--tg-color);
+  }
+  
+  .container {
+    max-width: 450px;
+    width: 90%;
+    margin: 40px auto;
+    padding: 30px;
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: var(--shadow);
+    text-align: center;
+  }
+  
+  form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-top: 20px;
+    align-items: stretch;
+  }
+  
+  input[type="text"],
+  input[type="password"],
+  textarea,
+  select {
+    padding: 12px 15px;
+    border: 1px solid #ddd;
+    border-radius: var(--border-radius);
+    font-size: 16px;
+    transition: border-color 0.3s;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  
+  input:focus,
+  textarea:focus,
+  select:focus {
+    border-color: var(--tg-color);
+    outline: none;
+  }
+  
+  textarea {
+    resize: vertical;
+    min-height: 100px;
+  }
+  
+  .btn {
+    padding: 12px 20px;
+    border: none;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 600;
+    transition: background-color 0.3s, opacity 0.3s;
+    color: #fff;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .btn-primary {
+    background-color: var(--tg-color);
+  }
+  
+  .btn-primary:hover:not(:disabled) {
+    background-color: #006AA7;
+  }
+  
+  .btn-primary:disabled {
+    background-color: #79c5f0;
+    cursor: not-allowed;
+  }
+  
+  .btn-danger {
+    background-color: var(--error-color);
+    margin-top: 20px;
+  }
+  
+  .btn-danger:hover {
+    background-color: #D32F2F;
+  }
+  
+  .spinner {
+    border: 4px solid rgba(255, 255, 255, 0.3);
+    border-top: 4px solid #fff;
+    border-radius: 50%;
+    width: 18px;
+    height: 18px;
+    animation: spin 1s linear infinite;
+    margin-right: 8px;
+  }
+  
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+  
+  #status-message,
+  #add-contact-status-message {
+    margin: 15px 0;
+    padding: 10px;
+    border-radius: var(--border-radius);
+    text-align: left;
+    font-weight: 500;
+    display: none;
+    min-height: 40px;
+    box-sizing: border-box;
+  }
+  
+  .status-success {
+    background-color: #e8f5e9;
+    color: var(--success-color);
+  }
+  
+  .status-error {
+    background-color: #ffebee;
+    color: var(--error-color);
+  }
+  
+  .username-display {
+    font-size: 1.2em;
+    color: #555;
+    margin-bottom: 25px;
+  }
+  
+  .section-divider {
+    border-top: 1px solid #eee;
+    margin: 30px 0;
+  }
+  
+  .contact-option-text {
+    font-weight: bold;
+  }
+  

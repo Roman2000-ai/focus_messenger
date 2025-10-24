@@ -3,136 +3,183 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Telegram Login — redirect only</title>
+    <link rel="stylesheet" href="/static/styles_index.css">
+    <title>Telegram Messenger</title>
     <style>
-      body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; margin: 24px; line-height: 1.45; }
-      .box { max-width: 720px; margin: 0 auto; padding: 16px; border: 1px solid #ddd; border-radius: 12px; }
-      pre { background:#fafafa; border:1px dashed #ccc; padding:10px; border-radius:8px }
+      :root {
+        --tg-color: #0088cc; /* Основной цвет Telegram */
+        --success-color: #4CAF50;
+        --error-color: #f44336;
+        --text-color: #333;
+        --bg-color: #f5f5f5;
+        --border-radius: 8px;
+        --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      }
+      body {
+        font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+        background-color: var(--bg-color);
+        color: var(--text-color);
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        min-height: 100vh;
+      }
+      h1, h2 { color: var(--tg-color); }
+      .container {
+        max-width: 450px; 
+        width: 90%;
+        margin: 40px auto;
+        padding: 30px;
+        background: #fff;
+        border-radius: 16px;
+        box-shadow: var(--shadow);
+        text-align: center;
+      }
+      form {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+        margin-top: 20px;
+        align-items: stretch;
+      }
+      input[type="text"], input[type="password"], textarea, select { 
+        padding: 12px 15px;
+        border: 1px solid #ddd;
+        border-radius: var(--border-radius);
+        font-size: 16px;
+        transition: border-color 0.3s;
+        width: 100%;
+        box-sizing: border-box;
+      }
+      input:focus, textarea:focus, select:focus {
+        border-color: var(--tg-color);
+        outline: none;
+      }
+      textarea { resize: vertical; min-height: 100px; }
+      .btn {
+        padding: 12px 20px;
+        border: none;
+        border-radius: var(--border-radius);
+        cursor: pointer;
+        font-size: 16px;
+        font-weight: 600;
+        transition: background-color 0.3s, opacity 0.3s;
+        color: #fff;
+        text-transform: uppercase;
+        display: flex; 
+        align-items: center;
+        justify-content: center;
+      }
+      .btn-primary { background-color: var(--tg-color); }
+      .btn-primary:hover:not(:disabled) { background-color: #006AA7; }
+      .btn-primary:disabled { background-color: #79c5f0; cursor: not-allowed; }
+      .btn-danger { background-color: var(--error-color); margin-top: 20px; }
+      .btn-danger:hover { background-color: #D32F2F; }
+      .spinner {
+        border: 4px solid rgba(255, 255, 255, 0.3);
+        border-top: 4px solid #fff;
+        border-radius: 50%;
+        width: 18px;
+        height: 18px;
+        animation: spin 1s linear infinite;
+        margin-right: 8px;
+      }
+      @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+      #status-message, #add-contact-status-message {
+        margin: 15px 0;
+        padding: 10px;
+        border-radius: var(--border-radius);
+        text-align: left;
+        font-weight: 500;
+        display: none;
+        min-height: 40px;
+        box-sizing: border-box;
+      }
+      .status-success { background-color: #e8f5e9; color: var(--success-color); }
+      .status-error { background-color: #ffebee; color: var(--error-color); }
+      .username-display { font-size: 1.2em; color: #555; margin-bottom: 25px; }
+      .section-divider { border-top: 1px solid #eee; margin: 30px 0; }
+      .contact-option-text { font-weight: bold; }
     </style>
   </head>
   <body>
-  <h1>The main  page</h1>
-  <h2>{% if user.first_name and user.last_nam %}{{user.first_name}} {{user.last_name}} {% else %}{{user.username}}{% endif%}</h2>
+  <div class="container">
+    <h1>Telegram Messenger</h1>
+
+    <h2 class="username-display">
+      {% if user.first_name and user.last_name %}{{user.first_name}} {{user.last_name}} {% else %}@{{user.username}}{% endif%}
+    </h2>
+
   {% if has_session %}
-  <!-- Блок приложения, когда Telethon уже авторизован -->
+  <div id="status-message"></div>
+
   <h2>Отправить сообщение</h2>
+
   <form id="send-form">
-    <input type="text" name="peer" placeholder="@username или номер" required />
-    <textarea name="text" placeholder="Текст" required></textarea>
-    <button type="submit">Отправить</button>
+    <select name="peer" id="contact-select" required>
+        <option value="" disabled selected>— Выберите контакт для отправки —</option>
+        {% for contact in contacts %}
+        <option value="{{ contact.telegram_id }}" data-username="{{ contact.username }}">
+            <span class="contact-option-text">
+            {% if contact.first_name %}{{ contact.first_name }}{% else %}Без имени{% endif %}
+            {% if contact.last_name %}{{ contact.last_name }}{% endif %}
+            </span>
+            ({% if contact.username %}@{{ contact.username }}{% else %}{{ contact.telegram_id }}{% endif %})
+        </option>
+        {% endfor %}
+        <option value="manual_input">— Ввести @username или ID вручную —</option>
+    </select>
+    
+    <input type="text" name="manual_peer_input" id="manual-peer-input" placeholder="@username, ID или номер телефона" style="display:none;" />
+    
+    <textarea name="text" placeholder="Текст сообщения" required></textarea>
+    <button type="submit" id="send-button" class="btn btn-primary">Отправить</button>
   </form>
 
-  <script>
-    document.getElementById('send-form').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const fd = new FormData(e.target);
-      const payload = { user: fd.get('peer'), message: fd.get('text') };
-      const res = await fetch('telegram/send_message', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        credentials: 'include',
-        body: JSON.stringify(payload)
-      });
-      const data = await res.json();
-      if(data.success === true){
-        alert("сообщение было отправлено")
-      }
-      else{
-        alert("сообщение не было  отправлено")
-      }
-      //alert(res.ok ? 'OK: ' + JSON.stringify(data) : 'Ошибка: ' + data.detail);
-    });
-  </script>
+  <div class="section-divider"></div>
+  <h2>История отправленных сообщений (за 12 часов)</h2>
+  
+  <div id="messages-history" style="text-align: left; padding: 10px; border: 1px solid #ddd; border-radius: var(--border-radius); min-height: 100px; max-height: 300px; overflow-y: auto; background-color: #fcfcfc;">
+      <p id="history-status" style="color: #888;">Выберите контакт, чтобы загрузить историю отправленных сообщений.</p>
+      </div>
+  
+
+  <div class="section-divider"></div>
+  <h2>Добавить контакт</h2>
+  <div id="add-contact-status-message" style="display: none;"></div>
+
+  <form id="add-contact-form">
+    <input type="text" name="identifier" id="contact-identifier-input" placeholder="@username, ID или номер телефона" required />
+    <button type="submit" id="add-contact-button" class="btn btn-primary">Добавить в список</button>
+  </form>
 {% else %}
-  <!-- Блок авторизации по телефону, если Telethon-сессии нет -->
   <h2>Авторизация Telegram (телефон)</h2>
+  <div id="status-message" style="display: none;"></div>
+
   <form id="phone-start">
     <input type="text" name="phone" placeholder="+79991234567" required />
-    <button type="submit">Отправить код</button>
+    <button type="submit" class="btn btn-primary">Отправить код</button>
   </form>
 
   <form id="phone-code" style="display:none">
-    <input type="text" name="flow_id" />
+    <input type="hidden" name="flow_id" /> 
     <input type="text" name="code" placeholder="Код из Telegram" required />
-    <button type="submit">Подтвердить код</button>
+    <button type="submit" class="btn btn-primary">Подтвердить код</button>
   </form>
 
   <form id="phone-pwd" style="display:none">
-    <input type="text" name="flow_id" />
+    <input type="hidden" name="flow_id" /> 
     <input type="password" name="password" placeholder="Пароль 2FA" required />
-    <button type="submit">Подтвердить пароль</button>
+    <button type="submit" class="btn btn-primary">Подтвердить пароль</button>
   </form>
 
-  <script>
-    const startForm = document.getElementById('phone-start');
-    const codeForm  = document.getElementById('phone-code');
-    const pwdForm   = document.getElementById('phone-pwd');
-
-    startForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const phone = new FormData(startForm).get('phone');
-      const res = await fetch('/auth/phone/start', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        credentials: 'include',
-        body: JSON.stringify({ phone })
-      });
-      const data = await res.json();
-      if (!res.ok) return alert(data.detail || 'Ошибка');
-      // показываем форму ввода кода
-      codeForm.style.display = '';
-      codeForm.querySelector('[name=flow_id]').value = data.flow_id;
-    });
-
-    codeForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const fd = new FormData(codeForm);
-      const payload = { flow_id: fd.get('flow_id'), code: fd.get('code') };
-      const res = await fetch('/auth/phone/verify_code', {
-        method: 'POST',
-        headers: {'Content-Type':'application/json'},
-        credentials: 'include',
-        body: JSON.stringify(payload)
-      });
-      const data = await res.json();
-      if (!res.ok) return alert(data.detail || 'Ошибка');
-      if (data.need_2fa) {
-        // показать форму пароля
-        pwdForm.style.display = '';
-        pwdForm.querySelector('[name=flow_id]').value = payload.flow_id;
-      } else {
-        // успех — перезагрузим, чтобы сервер передал has_session=true
-        location.reload();
-      }
-    });
-
-    pwdForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const fd = new FormData(pwdForm);
-      const payload = { flow_id: fd.get('flow_id'), password: fd.get('password') };
-      const res = await fetch('/auth/phone/verify_password', {
-        method: 'POST',
-        headers: {'Content-Type':'application/json'},
-        credentials: 'include',
-        body: JSON.stringify(payload)
-      });
-      const data = await res.json();
-      if (!res.ok) return alert(data.detail || 'Ошибка');
-      location.reload();
-    });
-  </script>
+  
 {% endif %}
-  <button id="log_out">log out</button>
-  </body>
-  <script>
-     const button_log_out = document.getElementById("log_out");
-     button_log_out.onclick = function(){
-      const form = document.createElement('form');
-  form.method = 'POST';
-  form.action = '/logout';
-  document.body.appendChild(form);
-  form.submit(); // браузер выполни
-  }
+  <button id="log_out" class="btn btn-danger">Выйти из сессии</button>
+  </div> 
+  <script src="/static/index.js"></script>
+</body>
 
-  </script>
 </html>
