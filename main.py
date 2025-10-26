@@ -20,6 +20,7 @@ from security import (
     create_access_jwt,
     create_refresh_jwt,
     decode_jwt,
+    get_user_id_from_expired_token,
 )
 from database.crud import upsert_user_to_db,get_telethon_session,get_user_by_id,get_all_contacts_for_user,add_contact_to_db
 
@@ -30,17 +31,39 @@ app.mount("/static", StaticFiles(directory=WEB_DIR), name="static")
 TG_ALLOWED_KEYS = {"id", "first_name", "last_name", "username", "photo_url", "auth_date", "hash"}
 templates = Jinja2Templates(directory=WEB_DIR)
 @app.get("/")
-async def root(request: Request, user=Depends(try_get_user)):
+async def root(request: Request, payload=Depends(try_get_user)):
     print("работает функция root")
-    if not user:
+    id_user = None
+    has_session = False
+    print(f"payload - {payload}")
+    if payload:
+        print("payload есть")
+        id_user = payload["sub"]
+        has_session = True
+    else:
+        print("попытка получить  просроченный токен")
+        access_token_str = request.cookies.get("access_token")
+        print(access_token_str)
+        if access_token_str:
+            print("токен access есть")
+            id_user = get_user_id_from_expired_token(access_token_str)
+            print(id_user)
+            if id_user:
+                print("токен  есть но  потухший")
+                has_session = True
+            else:
+                has_session = False
+            
+        
+    if not has_session:
         return RedirectResponse(url="/welcome", status_code=302)
 
-    id_user = user["sub"]
+    
     session = await get_telethon_session(id_user)
     user = await get_user_by_id(id_user)
     contacts = await get_all_contacts_for_user(id_user)
     return templates.TemplateResponse("index.html", {
-        "request": request,   # важно: нужно для url_for
+        "request": request,   
         "has_session": session,
         'contacts': [SendContactDTO.model_validate(con).model_dump() for con in contacts],
         "user": user
@@ -48,7 +71,7 @@ async def root(request: Request, user=Depends(try_get_user)):
 
 
 @app.get("/messages/{username:str}")
-async def  get_messages(username, user=Depends(try_get_user)):
+async def  get_messages(username, user=Depends(get_current_user_from_cookies)):
     user_id = user["sub"]
     session = await get_telethon_session(user_id)
     res, messages = await get_messages_from_dialog(session.session,username)
@@ -59,7 +82,7 @@ async def  get_messages(username, user=Depends(try_get_user)):
 
 
 @app.post("/add_contact")
-async def add_contact(payload: AddContactPayload,user=Depends(try_get_user)):
+async def add_contact(payload: AddContactPayload,user=Depends(get_current_user_from_cookies)):
     user_id = user["sub"]
     session = await get_telethon_session(user_id)
     success,data_user = await get_data_telegram_contact(session.session,payload.identifier,user_id)
@@ -110,8 +133,8 @@ async def auth_telegram_widget(request: Request):
 
     resp = RedirectResponse(url=return_to, status_code=302)
     resp.headers["Cache-Control"] = "no-store"
-    resp.set_cookie("access_token", access_token, httponly=True, secure=True, samesite="lax", max_age=15*60, path="/")
-    resp.set_cookie("refresh_token", refresh_token, httponly=True, secure=True, samesite="lax", max_age=30*24*60*60, path="/")
+    resp.set_cookie("access_token", access_token, httponly=True, secure=True, samesite="lax", max_age=15*24*60*60, path="/")
+    resp.set_cookie("refresh_token", refresh_token, httponly=True, secure=True, samesite="lax", max_age=30*24*60*60, path="/refresh")
     return resp
 
 @app.post("/refresh")

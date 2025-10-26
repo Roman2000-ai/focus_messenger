@@ -92,10 +92,30 @@ def decode_jwt(token: str) -> Dict:
     Декодирует и валидирует JWT.
     Бросает исключение, если токен просрочен или подпись неверна.
     """
+    print(f"access-token - {token}")
     print("работает decode_jwt")
     data = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALG])
     print(" decode_jwt отработал успешно")
     print(type(data))
     for key, value in data.items():
-        print(f'{key} - {value}') # проверяем подпись и exp
-    return data  # возвращаем словарь с claims
+        print(f'{key} - {value}') 
+    return data  
+
+
+def get_user_id_from_expired_token(token:str):
+
+    try:
+        payload = jwt.decode(
+                token, 
+                JWT_SECRET, 
+                algorithms=[JWT_ALG],
+                options={"verify_signature": True, "verify_exp": False} 
+            )
+
+        user_id = payload.get("sub")
+        return user_id
+
+    except jwt.JWTError as e:
+       
+        print(f"Ошибка при декодировании истекшего токена: {e}")
+        return None
