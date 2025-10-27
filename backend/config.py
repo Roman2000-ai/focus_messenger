@@ -10,6 +10,7 @@ API_HASH = os.getenv("API_HASH")
 API_ID = os.getenv("API_ID")
 TIMEOUT_WAITING_QR = float(os.getenv("TIMEOUT_WAITING_QR"))
 TIMEOUT_2FA_INPUT = float(os.getenv("TIMEOUT_2FA_INPUT"))
+DEBUG_DB = bool(os.getenv("DEBUG_DB",True))
 
 if TELEGRAM_BOT_TOKEN is None:  
     raise RuntimeError("TELEGRAM_BOT_TOKEN is not set in .env")  # сразу падаем с понятной ошибкой

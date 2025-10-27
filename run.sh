@@ -1,5 +1,6 @@
 #!/bin/sh
 
+PORT_TO_USE=${APP_PORT:-8000}
 
 DB_INIT_SCRIPT="./database/database.py"
 
@@ -16,4 +17,4 @@ echo "Инициализация базы данных завершена."
 
 
 echo "Запуск Gunicorn/Uvicorn..."
-exec gunicorn --bind 0.0.0.0:8000 -k uvicorn.workers.UvicornWorker main:app
+exec gunicorn --bind 0.0.0.0:"$PORT_TO_USE" -k uvicorn.workers.UvicornWorker backend.main:app
