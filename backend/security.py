@@ -1,12 +1,12 @@
-import time     # для работы со временем (метки iat/exp и проверка давности auth_date)
-import hmac     # для расчёта HMAC
-import hashlib  # для SHA256 и производных
-from typing import Dict  # подсказка типа словаря
+import time    
+import hmac     
+import hashlib  
+from typing import Dict  
 
-# Импорт внешних библиотек
-import jwt  # библиотека PyJWT для кодирования/декодирования JWT
 
-# Импорт наших настроек
+import jwt  
+
+
 from backend.config import TELEGRAM_BOT_TOKEN, JWT_SECRET, JWT_ALG  #
 
 
@@ -78,13 +78,13 @@ def create_refresh_jwt(subject: str, days: int = 30) -> str:
     Создаёт долгоживущий refresh-JWT.
     В реальном проде лучше хранить refresh-токены в БД (хеш), но пока делаем просто JWT.
     """
-    now = int(time.time())                              # текущее время
-    payload = {}                                        # claims
-    payload["sub"] = subject                            # идентификатор пользователя
-    payload["iat"] = now                                # время выпуска
-    payload["exp"] = now + 60 * 60 * 24 * days         # срок годности (дни)
-    payload["typ"] = "refresh"                          # помечаем тип (необязательно, но удобно)
-    token = jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALG)  # подпись
+    now = int(time.time())                              
+    payload = {}                                        
+    payload["sub"] = subject                            
+    payload["iat"] = now                                
+    payload["exp"] = now + 60 * 60 * 24 * days         
+    payload["typ"] = "refresh"                          
+    token = jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALG)  
     return token  
 
 def decode_jwt(token: str) -> Dict:

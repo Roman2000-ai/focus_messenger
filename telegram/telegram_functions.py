@@ -114,10 +114,10 @@ async def get_messages_from_dialog(session: str, username: str, offset_houres: i
             if not message.date or not message.text:
                 continue
 
-            # 🕒 Приведение к UTC
+            # Приведение к UTC
             msg_date = message.date.replace(tzinfo=timezone.utc) if message.date.tzinfo is None else message.date
 
-            # 📨 Фильтруем только исходящие за последние 12 часов
+            #  Фильтруем только исходящие за последние 12 часов
             if message.out and msg_date > offset_date:
                 recent_sent_messages.append({
                     "id": message.id,

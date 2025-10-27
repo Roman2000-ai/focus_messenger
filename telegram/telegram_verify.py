@@ -191,12 +191,12 @@ async def _qr_wait(qr_waiter,client,flow_id)-> None:
 
         
         print(f"[{flow_id}] ✅ УСПЕХ: Сессия получена и сохранена.")
-    except AsyncTimeoutError: # 🟢 ЯВНЫЙ ПЕРЕХВАТ: QR истек
+    except AsyncTimeoutError: #  ЯВНЫЙ ПЕРЕХВАТ: QR истек
         await client.disconnect()
         state['status'] = 'error'
         state['message'] = 'QR-код истек по времени (300с).'
         
-    except SessionPasswordNeededError: # 🟢 ЯВНЫЙ ПЕРЕХВАТ: 2FA
+    except SessionPasswordNeededError: #  ЯВНЫЙ ПЕРЕХВАТ: 2FA
         
         state["status"] = '2fa_required' 
         state['message'] = 'Требуется пароль облачной безопасности (2FA).'
