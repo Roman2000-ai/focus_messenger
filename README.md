@@ -65,8 +65,10 @@ cd telegram_morning_message
 ```env
 # === Авторизация / безопасность ===
 TELEGRAM_BOT_TOKEN=123456:ABC...      # токен бота от @BotFather (для widget/доменов)
+TELEGRAM_USERNAME= username bot       # username  твоего тг бота (для widget/доменов)
 JWT_SECRET=super_secret_key_here      # секрет для подписи JWT
 JWT_ALG=HS256                         # алгоритм подписи JWT
+DEBUG_DB=False                        # True если хочешь логи в db
 
 # === База данных ===
 URL_ASYNC_DB=sqlite+aiosqlite:///database/db/db.db   # SQLite по умолчанию
