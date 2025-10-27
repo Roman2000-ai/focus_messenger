@@ -1,7 +1,7 @@
 from ntpath import exists
 from database.database import async_factory_session
 from database.models import User , SessionTelethon,Contact,Shablon
-from schemas import UserDB
+from backend.schemas import UserDB
 from sqlalchemy import select
 from typing import Union
 

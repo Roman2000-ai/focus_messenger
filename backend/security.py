@@ -7,7 +7,7 @@ from typing import Dict  # подсказка типа словаря
 import jwt  # библиотека PyJWT для кодирования/декодирования JWT
 
 # Импорт наших настроек
-from config import TELEGRAM_BOT_TOKEN, JWT_SECRET, JWT_ALG  #
+from backend.config import TELEGRAM_BOT_TOKEN, JWT_SECRET, JWT_ALG  #
 
 
 def verify_telegram_signature(payload: Dict) -> bool:

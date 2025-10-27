@@ -5,11 +5,11 @@ from telethon.errors import SessionPasswordNeededError, PasswordHashInvalidError
 import time
 
 from fastapi import HTTPException
-from config import API_ID, API_HASH, TIMEOUT_2FA_INPUT ,TIMEOUT_WAITING_QR
+from backend.config import API_ID, API_HASH, TIMEOUT_2FA_INPUT ,TIMEOUT_WAITING_QR
 import secrets
 from typing import Dict
 from database.crud  import  add_or_update_session_to_db,upsert_user_to_db
-from schemas import PhoneStartDTO,PhoneCodeDTO, PhonePwdDTO
+from backend.schemas import PhoneStartDTO,PhoneCodeDTO, PhonePwdDTO
 import asyncio
 from asyncio import TimeoutError as AsyncTimeoutError
 

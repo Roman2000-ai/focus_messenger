@@ -12,10 +12,10 @@ import jwt
 
 from telegram.telegram_functions import send_telegram_message,get_data_telegram_contact,get_messages_from_dialog
 from telegram.telegram_verify import request_code_telegram,phone_verify_code,phone_verify_password, qr_verify, _qr_wait, check_status_qr,check_2fa_qr,cancel_qr_login
-from config import TELEGRAM_BOT_TOKEN, JWT_SECRET  # noqa: F401
-from schemas import MeOut,PhoneStartDTO,PhoneCodeDTO,PhonePwdDTO, MessageDTO, QRstatusDTO,AddContactPayload,SendContactDTO,TwofaDTO,Flow_idDTO
-from depends import get_current_user_from_cookies, try_get_user
-from security import (
+from backend.config import TELEGRAM_BOT_TOKEN, JWT_SECRET  # noqa: F401
+from backend.schemas import MeOut,PhoneStartDTO,PhoneCodeDTO,PhonePwdDTO, MessageDTO, QRstatusDTO,AddContactPayload,SendContactDTO,TwofaDTO,Flow_idDTO
+from backend.depends import get_current_user_from_cookies, try_get_user
+from backend.security import (
     verify_telegram_signature,
     create_access_jwt,
     create_refresh_jwt,
@@ -26,7 +26,7 @@ from database.crud import upsert_user_to_db,get_telethon_session,get_user_by_id,
 
 app = FastAPI()
 
-WEB_DIR = os.path.join(os.path.dirname(__file__), "web")
+WEB_DIR = os.path.join(os.path.dirname(__file__), "../web")
 app.mount("/static", StaticFiles(directory=WEB_DIR), name="static")
 TG_ALLOWED_KEYS = {"id", "first_name", "last_name", "username", "photo_url", "auth_date", "hash"}
 templates = Jinja2Templates(directory=WEB_DIR)

@@ -1,4 +1,4 @@
-from security import decode_jwt
+from backend.security import decode_jwt
 from fastapi import HTTPException,Request
 from typing import Dict
 import jwt

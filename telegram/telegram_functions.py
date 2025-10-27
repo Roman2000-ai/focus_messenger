@@ -1,6 +1,6 @@
 from telethon import TelegramClient
 from telethon.sessions import StringSession
-from config import API_HASH,API_ID
+from backend.config import API_HASH,API_ID
 from database.crud  import add_or_update_session_to_db
 from datetime import datetime, timedelta, timezone
 
