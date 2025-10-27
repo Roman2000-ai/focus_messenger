@@ -12,7 +12,7 @@ import jwt
 
 from telegram.telegram_functions import send_telegram_message,get_data_telegram_contact,get_messages_from_dialog
 from telegram.telegram_verify import request_code_telegram,phone_verify_code,phone_verify_password, qr_verify, _qr_wait, check_status_qr,check_2fa_qr,cancel_qr_login
-from backend.config import TELEGRAM_BOT_TOKEN, JWT_SECRET  # noqa: F401
+from backend.config import TELEGRAM_BOT_TOKEN, JWT_SECRET, TELEGRAM_USERNAME  # noqa: F401
 from backend.schemas import MeOut,PhoneStartDTO,PhoneCodeDTO,PhonePwdDTO, MessageDTO, QRstatusDTO,AddContactPayload,SendContactDTO,TwofaDTO,Flow_idDTO
 from backend.depends import get_current_user_from_cookies, try_get_user
 from backend.security import (
@@ -108,7 +108,13 @@ async def welcome(request: Request, user=Depends(try_get_user)):
     print('работает функция welcome')
     if user:
         return RedirectResponse(url="/", status_code=302)
-    return FileResponse(os.path.join(WEB_DIR, "login.html"))
+    return templates.TemplateResponse(
+        "login.html", 
+        {
+            "request": request, 
+            "TELEGRAM_USERNAME": TELEGRAM_USERNAME
+        }
+    )
 
 
 
