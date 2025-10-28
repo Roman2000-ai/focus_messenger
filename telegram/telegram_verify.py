@@ -19,12 +19,11 @@ QR_FLOWS: Dict = {}
 
 
 def _gen_id() -> str:
-    # Генерим безопасный короткий id для flow_id
+    """генерация id для flow"""
     return secrets.token_urlsafe(18)
 
 async def  request_code_telegram(data:PhoneStartDTO,web_user_id: str)->Dict[str,str]:
     """возвращает flow_id для дальнейшей авторизации"""
-    print("работает функция request_code-telegram")
     client = telethon.TelegramClient(StringSession(), API_ID, API_HASH)
    
     await client.connect()
@@ -49,12 +48,12 @@ async def  request_code_telegram(data:PhoneStartDTO,web_user_id: str)->Dict[str,
 
 
 
-async def phone_verify_code(data:PhoneCodeDTO):
+async def phone_verify_code(data:PhoneCodeDTO)-> dict:
+    """проверка телефона телеграм и логине через телефон"""
 
     flow = PHONE_FLOWS.get(data.flow_id)
     if not flow:
         raise HTTPException(404, "flow not found")
-    # 2. Проверяем ожидаемую стадию.
     if flow["stage"] != "code":
         raise HTTPException(400, f"unexpected stage: {flow['stage']}")
 
@@ -92,9 +91,10 @@ async def phone_verify_code(data:PhoneCodeDTO):
         
 
 
-async def phone_verify_password(data:PhonePwdDTO):
+async def phone_verify_password(data:PhonePwdDTO) -> dict:
+    """ проверка пароля (2fa)"""
 
-    print("работает функция phone_verify_password")
+
     flow = PHONE_FLOWS.get(data.flow_id)
     if not flow:
         raise HTTPException(404, "flow not found")
@@ -102,7 +102,6 @@ async def phone_verify_password(data:PhonePwdDTO):
         raise HTTPException(400, f"unexpected stage: {flow['stage']}")
 
     client: telethon.TelegramClient = flow["client"]
-    print(f"password - {data.password}")
 
     try:
         
@@ -158,6 +157,7 @@ async def qr_verify()-> dict:
 
 
 async def _qr_wait(qr_waiter,client,flow_id)-> None:
+    """логика после того как отсканировали qr"""
 
   
     state = QR_FLOWS[flow_id]
@@ -183,7 +183,6 @@ async def _qr_wait(qr_waiter,client,flow_id)-> None:
         await client.disconnect()
 
         
-        #  надо еще получить данные ою пользователе что бы  получить данные  в db
         
 
         state['status'] = 'authorized' 
@@ -191,31 +190,29 @@ async def _qr_wait(qr_waiter,client,flow_id)-> None:
 
         
         print(f"[{flow_id}] ✅ УСПЕХ: Сессия получена и сохранена.")
-    except AsyncTimeoutError: #  ЯВНЫЙ ПЕРЕХВАТ: QR истек
+    except AsyncTimeoutError: 
         await client.disconnect()
         state['status'] = 'error'
         state['message'] = 'QR-код истек по времени (300с).'
         
-    except SessionPasswordNeededError: #  ЯВНЫЙ ПЕРЕХВАТ: 2FA
+    except SessionPasswordNeededError: 
         
         state["status"] = '2fa_required' 
         state['message'] = 'Требуется пароль облачной безопасности (2FA).'
         state["client"] =  client
         
-    except Exception as e: # Ловим все остальные, включая ConnectionError
+    except Exception as e: 
         await client.disconnect()
         state['status'] = 'error' 
         state['message'] = f'Критическая ошибка: {e.__class__.__name__}'
 
 async def check_status_qr(flow_id):
-    print("работает функция check_status_qr")
+    """проверка состояния QR_FLOWS"""
     state = QR_FLOWS.get(flow_id)
     cur_time = time.time()
     timestamp = float(state["timestamp"])
 
     if state:
-        print("state есть!!!")
-        print(f"статус flow_id ({flow_id}) - {state['status']}")
         if state['status'] == "authorized":
             state =  QR_FLOWS.pop(flow_id)
             return state
@@ -226,7 +223,6 @@ async def check_status_qr(flow_id):
             timeout_duration = TIMEOUT_WAITING_QR
             
             if cur_time - timestamp > timeout_duration:
-                print("время истекло")
                 state["status"] = "error"
                 state['message'] = f"Таймаут истек ({timeout_duration} секунд). Поток удален."
                 state = QR_FLOWS.pop(flow_id)
@@ -246,6 +242,7 @@ async def check_status_qr(flow_id):
 
 
 async  def check_2fa_qr(flow_id,password):
+    """проверка пароля(2fa)"""
     try:
         state = QR_FLOWS.get(flow_id)
         client = state.get("client")
@@ -310,10 +307,7 @@ async def cancel_qr_login(temp_id: str) -> dict:
     client = state['client']
     
     try:
-        # 1. Отключаем клиента, это прерывает ожидание (qr_waiter.wait())
         await client.disconnect()
-        
-        # 2. Очищаем состояние из памяти
         del QR_FLOWS[temp_id]
         
         print(f"[{temp_id}] 🛑 Процесс отменен вручную.")

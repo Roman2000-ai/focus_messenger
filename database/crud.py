@@ -1,9 +1,8 @@
-from ntpath import exists
 from database.database import async_factory_session
-from database.models import User , SessionTelethon,Contact,Shablon
+from database.models import User, SessionTelethon, Contact
 from backend.schemas import UserDB
 from sqlalchemy import select
-from typing import Union
+from typing import Tuple
 
 
 
@@ -11,8 +10,8 @@ from typing import Union
 
 
 
-async def upsert_user_to_db(user:dict):
-
+async def upsert_user_to_db(user:dict)-> User|None:
+    """обновление или добавление user в db"""
     dto = UserDB(**user)
 
     try:
@@ -40,14 +39,16 @@ async def upsert_user_to_db(user:dict):
         print(f"произошла ошибка в функции add_user_to_db ошибка:\n{e}")
         return None
 
-async def get_user_by_id(id: int):
+async def get_user_by_id(id: int) -> User|None:
+    """получения user по id"""
     async with async_factory_session() as session:
         query = select(User).where(User.id == id)
         res = await session.execute(query)
         user = res.scalar_one_or_none()
         return user
 
-async def add_or_update_session_to_db(session_telethon:str,user_id:int):
+async def add_or_update_session_to_db(session_telethon:str,user_id:int)-> bool:
+    """добавление или обновление session в db"""
 
     try:
         async with async_factory_session() as session:
@@ -74,7 +75,8 @@ async def add_or_update_session_to_db(session_telethon:str,user_id:int):
 
 
 
-async def get_telethon_session(user_id: int)-> SessionTelethon: 
+async def get_telethon_session(user_id: int)-> SessionTelethon|None: 
+    """получение сессии с помощью user_id для работы в telethon"""
     async with async_factory_session() as session:
 
         query = select(SessionTelethon).where(SessionTelethon.user_id == user_id)
@@ -90,6 +92,7 @@ async def get_telethon_session(user_id: int)-> SessionTelethon:
 
 
 async def get_all_contacts_for_user(user_id: int|str)-> list[Contact]:
+    """получение contacts с помощью  user_id"""
 
     user_id = int(user_id)
     query = select(Contact).where(Contact.user_id==user_id)
@@ -100,7 +103,10 @@ async def get_all_contacts_for_user(user_id: int|str)-> list[Contact]:
         contacts = res.scalars().all()
 
         return contacts
-async def add_contact_to_db(data_user: dict,user_id: str|int):
+
+
+async def add_contact_to_db(data_user: dict,user_id: str|int)-> Tuple:
+    """ добавление contacts   в db"""
     async with async_factory_session() as session:
         existing =   ( await session.execute(select(Contact).where(Contact.telegram_id == data_user["telegram_id"]))).scalar_one_or_none()
         if existing:
@@ -116,27 +122,8 @@ async def add_contact_to_db(data_user: dict,user_id: str|int):
 
         print(f"{contact_orm} был добавлен в db")
         return True, contact_orm
-    return False
+    
 
-# async def add_shablon_to_db(user_id:int,contact_id:int,text:str):
-# """добавляет шаблон в db"""
-
-# try: 
-#     async with async_factory_session() as session:
-
-#         shablon_orm =  Shablon(user_id=user_id,contact_id=contact_id,text=text)
-
-#         session.add(shablon_orm)
-
-#         await session.commmit()
-
-#         await session.refresh(shablon_orm)
-
-#         print(f"{repr(shablon_orm)}  был добавлен в db")
-#         return shablon_orm
-
-
-#async def get_shablons_by_user_id_chat_id()
 
 
 

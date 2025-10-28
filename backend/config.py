@@ -14,7 +14,7 @@ DEBUG_DB = bool(os.getenv("DEBUG_DB",True))
 TELEGRAM_USERNAME = os.getenv("TELEGRAM_USERNAME")
 
 if TELEGRAM_BOT_TOKEN is None:  
-    raise RuntimeError("TELEGRAM_BOT_TOKEN is not set in .env")  # сразу падаем с понятной ошибкой
+    raise RuntimeError("TELEGRAM_BOT_TOKEN is not set in .env")  
 
 if JWT_SECRET is None:  
     raise RuntimeError("JWT_SECRET is not set in .env")  

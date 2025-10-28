@@ -1,8 +1,4 @@
-# -*- coding: utf-8 -*-
-
-from cgitb import reset
 import os
-from webbrowser import get
 from fastapi import FastAPI, HTTPException, Request, Depends
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -30,6 +26,9 @@ WEB_DIR = os.path.join(os.path.dirname(__file__), "../web")
 app.mount("/static", StaticFiles(directory=WEB_DIR), name="static")
 TG_ALLOWED_KEYS = {"id", "first_name", "last_name", "username", "photo_url", "auth_date", "hash"}
 templates = Jinja2Templates(directory=WEB_DIR)
+
+
+#основная страница
 @app.get("/")
 async def root(request: Request, payload=Depends(try_get_user)):
     print("работает функция root")
@@ -68,44 +67,9 @@ async def root(request: Request, payload=Depends(try_get_user)):
         'contacts': [SendContactDTO.model_validate(con).model_dump() for con in contacts],
         "user": user
     })
-
-
-@app.get("/messages/{username:str}")
-async def  get_messages(username, user=Depends(get_current_user_from_cookies)):
-    user_id = user["sub"]
-    session = await get_telethon_session(user_id)
-    res, messages = await get_messages_from_dialog(session.session,username)
-    print(messages)
-    if not res:
-        return {"success":False,"message": "произошла ошибка в db"}
-    return {"success":True,"messages": messages}
-
-
-@app.post("/add_contact")
-async def add_contact(payload: AddContactPayload,user=Depends(get_current_user_from_cookies)):
-    user_id = user["sub"]
-    session = await get_telethon_session(user_id)
-    success,data_user = await get_data_telegram_contact(session.session,payload.identifier,user_id)
-    if not success:
-        return {
-            "success": False,
-            "message": "ошибка при получении данных о  контакте" 
-        }
-    res,contact = await  add_contact_to_db(data_user,int(user_id))
-    if res:
-        contact_dto = SendContactDTO.model_validate(contact)
-        return {"contact":contact_dto,"success": True, "message": "Контакт успешно добавлен."} # наверное нужно добавить dto для отправки  сообщения 
-
-    return {"success":False, "message": "ошибка при добавлении в db"}
-
-    
-
-
-
-
+# страница авторизации
 @app.get("/welcome")
 async def welcome(request: Request, user=Depends(try_get_user)):
-    print('работает функция welcome')
     if user:
         return RedirectResponse(url="/", status_code=302)
     return templates.TemplateResponse(
@@ -118,9 +82,9 @@ async def welcome(request: Request, user=Depends(try_get_user)):
 
 
 
+#авториция через telegram-widget
 @app.get("/auth/telegram-widget")
 async def auth_telegram_widget(request: Request):
-    print("работает функция auth_telegram_widget")
     raw = dict(request.query_params)
     params = {k: v for k, v in raw.items() if k in TG_ALLOWED_KEYS}
 
@@ -143,6 +107,44 @@ async def auth_telegram_widget(request: Request):
     resp.set_cookie("refresh_token", refresh_token, httponly=True, secure=True, samesite="lax", max_age=30*24*60*60, path="/refresh")
     return resp
 
+
+# получение сообщений
+@app.get("/messages/{username:str}")
+async def  get_messages(username, user=Depends(get_current_user_from_cookies)):
+    user_id = user["sub"]
+    session = await get_telethon_session(user_id)
+    res, messages = await get_messages_from_dialog(session.session,username)
+    if not res:
+        return {"success":False,"message": "произошла ошибка в db"}
+    return {"success":True,"messages": messages}
+
+# добавление контакта
+@app.post("/add_contact")
+async def add_contact(payload: AddContactPayload,user=Depends(get_current_user_from_cookies)):
+    user_id = user["sub"]
+    session = await get_telethon_session(user_id)
+    success,data_user = await get_data_telegram_contact(session.session,payload.identifier,user_id)
+    if not success:
+        return {
+            "success": False,
+            "message": "ошибка при получении данных о  контакте" 
+        }
+    res,contact = await  add_contact_to_db(data_user,int(user_id))
+    if res:
+        contact_dto = SendContactDTO.model_validate(contact)
+        return {"contact":contact_dto,"success": True, "message": "Контакт успешно добавлен."} # наверное нужно добавить dto для отправки  сообщения 
+
+    return {"success":False, "message": "ошибка при добавлении в db"}
+
+    
+
+
+
+
+
+
+
+# обновление токена
 @app.post("/refresh")
 async def refresh(request: Request):
     refresh_token = request.cookies.get("refresh_token")
@@ -178,29 +180,30 @@ async def me(current=Depends(get_current_user_from_cookies)):
 
 
 
-
+#запрос в telegram api  для получения сессии если зашли через telgram widget
 @app.post("/auth/phone/start")
 async def phone_start(dto:PhoneStartDTO, current=Depends(get_current_user_from_cookies)):
-    print("работает функция phone_start")
     web_user_id = current["sub"]
     flow =  await request_code_telegram(dto,web_user_id)
     return flow
-
+#отпрвления код  для логина на telegram api
 @app.post("/auth/phone/verify_code")
 async def verify_code(dto:PhoneCodeDTO,current=Depends(get_current_user_from_cookies)):
     res = await phone_verify_code(dto)
     return res
-
+# получения  пароля если 2fa при авторизации на telegram api
 @app.post("/auth/phone/verify_password")
 async def verify_password(dto:PhonePwdDTO,current=Depends(get_current_user_from_cookies)):
     res =  await phone_verify_password(dto)
     return res
+#логин через qr code(telethon) 
 @app.post("/auth/qr")
 async def  create_qr():
     print("работает функция create_qr")
     res  = await qr_verify()
     print(f"res = {res}")
     return res
+#pooling  провери сканирования кода    
 @app.post("/auth/qr/check")
 async def check_qr(data:QRstatusDTO):
     print("работает функция  check_qr")
@@ -231,6 +234,8 @@ async def check_qr(data:QRstatusDTO):
         
         return resp
 
+
+#получение пароля если 2fa при логине через qr 
 @app.post("/auth/qr/2fa")
 async def resume_2fa(data: TwofaDTO):
 
@@ -241,7 +246,7 @@ async def resume_2fa(data: TwofaDTO):
     return res
 
 
-
+#отравление сообщения
 @app.post("/telegram/send_message")
 async def send_message(message_data:MessageDTO,current=Depends(get_current_user_from_cookies)):
 
@@ -254,13 +259,13 @@ async def send_message(message_data:MessageDTO,current=Depends(get_current_user_
     if not res:
         return {"success":False}
     return {"success": True}
-
+# отмена логирования
 @app.post("/auth/qr/cancel")
 async def cancel_qr(data:Flow_idDTO):
     flow_id = data.flow_id
     res =  await cancel_qr_login(flow_id)
     return res
-
+# выход из системы
 @app.post("/logout")
 async def logout(request: Request, user=Depends(try_get_user)):
     resp = RedirectResponse(url="/welcome", status_code=303)

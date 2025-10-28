@@ -16,45 +16,44 @@ def verify_telegram_signature(payload: Dict) -> bool:
     Возвращает True при валидной подписи и свежем auth_date, иначе False.
     """
     
-    data_copy = dict(payload)  # создаём поверхностную копию
+    data_copy = dict(payload)  
 
     
-    received_hash = data_copy.pop("hash", None)  # получить хеш и убрать из данных
+    received_hash = data_copy.pop("hash", None)  
 
    
     if received_hash is None:  
         return False  
 
-    # Собираем data-check-string: сортируем ключи и делаем строки вида "key=value"
-    pairs = []  # список, куда будем класть "key=value"
-    for key in sorted(data_copy.keys()):  # алфавитный порядок ключей
-        value = data_copy[key]  # берём значение по ключу
-        pairs.append("{0}={1}".format(key, value))  # добавляем строку без f-строки
-    data_check_string = "\n".join(pairs)  # соединяем строки переводом строки
+    
+    pairs = []  
+    for key in sorted(data_copy.keys()):  
+        value = data_copy[key]  
+        pairs.append("{0}={1}".format(key, value))  
+    data_check_string = "\n".join(pairs)  
 
     # Секретный ключ для HMAC = SHA256(TELEGRAM_BOT_TOKEN)
     secret_key = hashlib.sha256(TELEGRAM_BOT_TOKEN.encode("utf-8")).digest()  # бинарный ключ
 
     # Считаем HMAC-SHA256(data_check_string, secret_key) и берём hex-представление
     calculated_hash = hmac.new(
-        secret_key,  # ключ HMAC
-        msg=data_check_string.encode("utf-8"),  # байтовое сообщение
+        secret_key,  
+        msg=data_check_string.encode("utf-8"), 
         digestmod=hashlib.sha256  # алгоритм SHA256
-    ).hexdigest()  # hex-строка результата
+    ).hexdigest() 
 
-    # Сравниваем безопасным методом, устойчивым к тайминговым атакам
-    if not hmac.compare_digest(calculated_hash, received_hash):  # если подпись не совпала
-        return False  # возвращаем False
 
-    # Дополнительная защита: проверяем свежесть auth_date
-    now = int(time.time())  # текущее UNIX-время
-    auth_ts = int(data_copy.get("auth_date", 0))  # читаем метку времени из данных
-    # Разумное окно 120 секунд; при необходимости увеличьте
-    if now - auth_ts > 120:  # если данные слишком старые
-        return False  # считаем недействительными
+    if not hmac.compare_digest(calculated_hash, received_hash):  
+        return False  
 
-    # Если дошли сюда — подпись корректна и данные свежие
-    return True  # всё хорошо
+    
+    now = int(time.time())  
+    auth_ts = int(data_copy.get("auth_date", 0))  
+  
+    if now - auth_ts > 180:  
+        return False 
+
+    return True  
 
 
 
@@ -63,20 +62,19 @@ def create_access_jwt(user_id: int) -> str:
     Создаёт наш собственный JWT для сессии приложения.
     Кладём sub=telegram_id, плюс стандартные метки iat/exp.
     """
-    # Полезная нагрузка токена
-    payload = {}  # создаём словарь для claims
-    payload["sub"] = str(user_id)  # subject — идентификатор пользователя в виде строки
-    payload["iat"] = int(time.time())  # время выпуска токена
+   
+    payload = {}  
+    payload["sub"] = str(user_id)  
+    payload["iat"] = int(time.time())  
     payload["exp"] = int(time.time()) + 3600 * 24 * 7  # срок действия (7 дней)
 
-    # Кодируем токен нашим секретом и алгоритмом
-    token = jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALG)  # получаем строку JWT
-    return token  # возвращаем строковый токен
+    
+    token = jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALG)  
+    return token  
 
 def create_refresh_jwt(subject: str, days: int = 30) -> str:
     """
     Создаёт долгоживущий refresh-JWT.
-    В реальном проде лучше хранить refresh-токены в БД (хеш), но пока делаем просто JWT.
     """
     now = int(time.time())                              
     payload = {}                                        
@@ -92,17 +90,15 @@ def decode_jwt(token: str) -> Dict:
     Декодирует и валидирует JWT.
     Бросает исключение, если токен просрочен или подпись неверна.
     """
-    print(f"access-token - {token}")
-    print("работает decode_jwt")
+
     data = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALG])
     print(" decode_jwt отработал успешно")
-    print(type(data))
-    for key, value in data.items():
-        print(f'{key} - {value}') 
+    
     return data  
 
 
 def get_user_id_from_expired_token(token:str):
+    """Получает анные из просроченного access токена, не вызывая исключений."""
 
     try:
         payload = jwt.decode(

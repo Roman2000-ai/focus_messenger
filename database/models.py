@@ -20,7 +20,6 @@ class User(Base):
     photo_url:Mapped[str] = mapped_column(nullable=True)
     auth_date:Mapped[int] = mapped_column(nullable=True)
     phone:Mapped[str] = mapped_column(nullable=True)
-     # для telethon  session в будущем
     
     session: Mapped["SessionTelethon"] = relationship(
         back_populates="user",
@@ -46,18 +45,6 @@ class SessionTelethon(Base):
 
     user: Mapped["User"] = relationship(back_populates="session")
 
-# class Telegramchat(Base):
-#     __tablename__ = "telegramchats"
-#     id: Mapped[int]  = mapped_column(primary_key=True,autoincrement=True)
-#     chat_id: Mapped[int] = mapped_column(nullable=False,unique=True)
-#     title: Mapped[str|None]
-#     user_id: Mapped[int] = mapped_column(ForeignKey("users.id",ondelete="CASCADE"),nullable=False)
-#     chat_type: Mapped[str|None]
-#     username: Mapped[str|None]
-#     created_at: Mapped[datetime.datetime] = mapped_column(server_default=func.now())
-#     updated_at: Mapped[datetime.datetime] = mapped_column(server_default=func.now(), onupdate=func.now())
-
-#     user: Mapped[User] = relationship(back_populates="chats")
 
 
 class Shablon(Base):

@@ -10,15 +10,15 @@ def get_current_user_from_cookies(request: Request) -> Dict:
     """
     print("работает функция get_current_user_from_cookies")
     token = request.cookies.get("access_token")
-    print(f'token - {token}')                   # забираем куку
-    if token is None:                                                 # если нет
-        raise HTTPException(status_code=401, detail="Missing access token")  # 401
+    print(f'token - {token}')                   
+    if token is None:                                                 
+        raise HTTPException(status_code=401, detail="Missing access token")  
     try:
-        payload = decode_jwt(token)                                   #
-    except jwt.ExpiredSignatureError:                                 # истёк
-        raise HTTPException(status_code=401, detail="Access expired") # 401
-    except jwt.InvalidTokenError:                                     # битый токен
-        raise HTTPException(status_code=401, detail="Invalid access") # 401
+        payload = decode_jwt(token)                                   
+    except jwt.ExpiredSignatureError:                                 
+        raise HTTPException(status_code=401, detail="Access expired") 
+    except jwt.InvalidTokenError:                                     
+        raise HTTPException(status_code=401, detail="Invalid access") 
     return payload    
 
 async def try_get_user(request: Request):
