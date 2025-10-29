@@ -6,10 +6,23 @@ services:
     build:
       context: .
       dockerfile: ./Dockerfile
-    ports:
-      - 8000:8000
+    expose:
+      - "8000"
     volumes:
       - database_telegram:/app/database/db
     restart: always
+
+  nginx:
+    image: nginx:latest
+
+    depends_on:
+      - telegrammorningmassage
+
+    ports:
+      - 80:80
+    
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./web/static:/usr/share/nginx/html/static:ro
 volumes:
   database_telegram:
