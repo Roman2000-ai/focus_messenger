@@ -217,10 +217,12 @@ async def check_qr(data:QRstatusDTO):
     if state["status"] =="2fa_required":
         return {"status": "2fa_required","message":state["message"]}
     if state["status"] == "authorized":
+        print("статус - authorized")
         user_id = state["user_id"]
-
+        print("создание токенов")
         access_token = create_access_jwt(str(user_id))
         refresh_token = create_refresh_jwt(str(user_id), days=30)
+        print(f"токены созданы \n access_toekn -{access_token} \n refresh_token -{refresh_token}")
 
         resp = JSONResponse({
             "status": "authorized",
