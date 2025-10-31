@@ -2,7 +2,7 @@
 
 PORT_TO_USE=${APP_PORT:-8000}
 
-DB_INIT_SCRIPT="./backend/database/database.py"
+DB_INIT_SCRIPT="./database/database.py"
 
 if [ ! -f $DB_INIT_SCRIPT ]; then
     echo "Ошибка: Не найден скрипт инициализации базы данных: $DB_INIT_SCRIPT"
