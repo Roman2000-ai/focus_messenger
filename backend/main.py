@@ -34,7 +34,6 @@ async def root(request: Request, payload=Depends(try_get_user)):
     print("работает функция root")
     id_user = None
     has_session = False
-    print(f"payload - {payload}")
     if payload:
         print("payload есть")
         id_user = payload["sub"]
@@ -222,7 +221,6 @@ async def check_qr(data:QRstatusDTO):
         print("создание токенов")
         access_token = create_access_jwt(str(user_id))
         refresh_token = create_refresh_jwt(str(user_id), days=30)
-        print(f"токены созданы \n access_toekn -{access_token} \n refresh_token -{refresh_token}")
 
         resp = JSONResponse({
             "status": "authorized",

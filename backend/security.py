@@ -32,14 +32,14 @@ def verify_telegram_signature(payload: Dict) -> bool:
         pairs.append("{0}={1}".format(key, value))  
     data_check_string = "\n".join(pairs)  
 
-    # Секретный ключ для HMAC = SHA256(TELEGRAM_BOT_TOKEN)
-    secret_key = hashlib.sha256(TELEGRAM_BOT_TOKEN.encode("utf-8")).digest()  # бинарный ключ
 
-    # Считаем HMAC-SHA256(data_check_string, secret_key) и берём hex-представление
+    secret_key = hashlib.sha256(TELEGRAM_BOT_TOKEN.encode("utf-8")).digest()  
+
+    
     calculated_hash = hmac.new(
         secret_key,  
         msg=data_check_string.encode("utf-8"), 
-        digestmod=hashlib.sha256  # алгоритм SHA256
+        digestmod=hashlib.sha256  
     ).hexdigest() 
 
 
@@ -66,7 +66,7 @@ def create_access_jwt(user_id: int) -> str:
     payload = {}  
     payload["sub"] = str(user_id)  
     payload["iat"] = int(time.time())  
-    payload["exp"] = int(time.time()) + 3600 * 24 * 7  # срок действия (7 дней)
+    payload["exp"] = int(time.time()) + 3600 * 24 * 7 
 
     
     token = jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALG)  
