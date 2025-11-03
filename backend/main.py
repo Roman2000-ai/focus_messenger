@@ -41,7 +41,6 @@ async def root(request: Request, payload=Depends(try_get_user)):
     else:
         print("попытка получить  просроченный токен")
         access_token_str = request.cookies.get("access_token")
-        print(access_token_str)
         if access_token_str:
             print("токен access есть")
             id_user = get_user_id_from_expired_token(access_token_str)
@@ -200,7 +199,6 @@ async def verify_password(dto:PhonePwdDTO,current=Depends(get_current_user_from_
 async def  create_qr():
     print("работает функция create_qr")
     res  = await qr_verify()
-    print(f"res = {res}")
     return res
 #pooling  провери сканирования кода    
 @app.post("/auth/qr/check")

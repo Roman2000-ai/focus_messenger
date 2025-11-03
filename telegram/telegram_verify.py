@@ -264,7 +264,6 @@ async  def check_2fa_qr(flow_id,password):
         data_user["photo_url"] = getattr(web_user,"photo_url",None)
         
         user = await upsert_user_to_db(data_user)
-        print(f" получен user - {repr(user)}")
         session = await add_or_update_session_to_db(new_session,user.id)
         await client.disconnect()
         

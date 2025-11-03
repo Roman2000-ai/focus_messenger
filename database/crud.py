@@ -26,13 +26,11 @@ async def upsert_user_to_db(user:dict)-> User|None:
                 existing.phone = dto.phone
                 await session.flush()
                 await session.commit()
-                print(f"{repr(existing)} был обновлен")
                 return existing
             user_orm = User(**dto.model_dump())
             session.add(user_orm)
             await session.commit()
             await session.refresh(user_orm)
-            print(f"{repr(user_orm)}   был добвлен в db")
             return user_orm
 
     except Exception as e:
@@ -120,7 +118,6 @@ async def add_contact_to_db(data_user: dict,user_id: str|int)-> Tuple:
 
         await session.refresh(contact_orm)
 
-        print(f"{contact_orm} был добавлен в db")
         return True, contact_orm
     
 

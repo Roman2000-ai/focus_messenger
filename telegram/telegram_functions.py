@@ -10,7 +10,6 @@ async def  send_telegram_message(session: str, user: str, message: str)-> bool:
     try:
         async with TelegramClient(StringSession(session),API_ID,API_HASH) as client:
             entity =  await client.get_entity(user)
-            print(entity)
             await client.send_message(entity,message)
             return True
     except Exception as e:
