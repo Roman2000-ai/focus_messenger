@@ -1,9 +1,15 @@
 from telethon import TelegramClient
 from telethon.sessions import StringSession
-from backend.config import API_HASH,API_ID
-from database.crud  import add_or_update_session_to_db
+
+from src.database.crud  import add_or_update_session_to_db
 from datetime import datetime, timedelta, timezone
-from typing import Tuple
+from src.telegram.config import telegram_settings
+
+#позже добавить функции из db
+
+
+API_HASH = telegram_settings.api_hash
+API_ID = telegram_settings.api_id
 
 async def  send_telegram_message(session: str, user: str, message: str)-> bool:
     """отправляет сообщение  telegram user"""
@@ -20,7 +26,7 @@ async def  send_telegram_message(session: str, user: str, message: str)-> bool:
 
 
 
-async def  get_data_telegram_contact(session:str,data_cont:str,user_id:str|int) -> Tuple:
+async def  get_data_telegram_contact(session:str,data_cont:str,user_id:str|int) -> tuple:
     """ получает данные о контакте и добадяет его в db"""
 
     try:
@@ -50,7 +56,7 @@ async def  get_data_telegram_contact(session:str,data_cont:str,user_id:str|int) 
 
 
 
-async def get_messages_from_dialog(session: str, username: str, offset_houres: int = 12, fetch_limit: int = 200)-> Tuple:
+async def get_messages_from_dialog(session: str, username: str, offset_houres: int = 12, fetch_limit: int = 200)-> tuple:
     """получение  своих сообщниий из диалога"""
     recent_sent_messages = []
     offset_date = datetime.now(timezone.utc) - timedelta(hours=offset_houres)

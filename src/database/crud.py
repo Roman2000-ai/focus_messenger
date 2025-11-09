@@ -1,6 +1,6 @@
-from database.database import async_factory_session
-from database.models import User, SessionTelethon, Contact
-from backend.schemas import UserDB
+from src.database.database import async_factory_session
+from src.database.models import User, SessionTelethon, Contact
+from src.database.schemas import UserDB
 from sqlalchemy import select
 from typing import Tuple
 
@@ -57,7 +57,6 @@ async def add_or_update_session_to_db(session_telethon:str,user_id:int)-> bool:
                 )).scalar_one_or_none()
 
                 if existing:
-                    print("сессия существует,идет обновление")
                     existing.session = session_telethon  
                     return True 
                     
@@ -108,7 +107,6 @@ async def add_contact_to_db(data_user: dict,user_id: str|int)-> Tuple:
     async with async_factory_session() as session:
         existing =   ( await session.execute(select(Contact).where(Contact.telegram_id == data_user["telegram_id"]))).scalar_one_or_none()
         if existing:
-            print('contact  already exists')
             return False, "exist"
         
         contact_orm =  Contact(**data_user,user_id=user_id)

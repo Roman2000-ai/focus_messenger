@@ -111,7 +111,7 @@ try {
 
 // 3. Запрос нового токена. Браузер автоматически прикрепит refresh_token куку
 
-await apiClient.post('/refresh');
+await apiClient.post('auth/refresh');
 
 
 
@@ -319,7 +319,7 @@ try {
 
 // ИСПОЛЬЗУЕМ apiClient ВМЕСТО fetch
 
-const res = await apiClient.get(`/messages/${identifier}`);
+const res = await apiClient.get(`telegram/messages/${identifier}`);
 
 const data = res.data; // Axios: данные в свойстве .data
 
@@ -659,7 +659,7 @@ const payload = { identifier: identifier };
 
 // ИСПОЛЬЗУЕМ apiClient ВМЕСТО fetch
 
-const res = await apiClient.post('/add_contact', payload);
+const res = await apiClient.post('telegram/add_contact', payload);
 
 const data = res.data;
 
